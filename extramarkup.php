@@ -3,7 +3,7 @@
  * extramarkup - contains markup additions that can be useful
  *
  * @author Tamara Temple <tamara@tamaratemple.com>
- * Time-stamp: <2012-09-19 12:46:17 tamara>
+ * Time-stamp: <2012-09-19 13:35:03 tamara>
  * @version 20120320
  * @copyright 2012 Tamara Temple
  * @package pmwiki-stuff
@@ -22,13 +22,14 @@ Markup('latex','inline',
 
 // nice markup for CC licenses
 //
-// Usage: (:cc-license [type=(by|by-nc|by-nc-sa)] [title=<name of work>] [work=<URL of work>] [author=<name of author>] [permissions=<link to more permissions page]:)
+// Usage: (:cc-license [type=(by|by-nc|by-nc-sa)] [title=<name of work>] [work=<URL of work>] [author=<name of author>] [authorurl=<link to author's contact page> ] [permissions=<link to more permissions page>]:)
 //
 // Defaults:
 //   type: by-nc-sa
 //   title: $WikiTitle
 //   work: $ScriptDirUrl
 //   author: Anonymous
+//   authorurl: blank
 //   permissions: $ScriptDirUrl?n=Site.Permissions
 //
 Markup('creativecommonslicenses', /* unique markup identifier */
@@ -38,33 +39,41 @@ Markup('creativecommonslicenses', /* unique markup identifier */
 function cc_license_markup($parameters='')
 {
   $parameters=stripslashes($parameters);
-  @sms('parameters: ',$parameters,basename(__FILE__),__LINE__);
-  @sms('parsed parameters: ',ParseArgs($parameters),basename(__FILE__),__LINE__);
+  @sms('parameters: ',$parameters,__FILE__,__LINE__,__FUNCTION__,__CLASS__);
+  @sms('parsed parameters: ',ParseArgs($parameters),__FILE__,__LINE__,__FUNCTION__,__CLASS__);
   global $WikiTitle, $ScriptUrl;
   /* defaults */
-  $LicenseFmt = "<a rel='license' href='cc_licenseUrl'><img alt='cc_licenseLogoAlt' style='border-width:0' src='cc_licenseLogoSrc' /></a> <span xmlns:dct='http://purl.org/dc/terms/' href='http://purl.org/dc/dcmitype/Text' property='dct:title' rel='dct:type'>cc_title</span> by <a xmlns:cc='http://creativecommons.org/ns#' href='cc_work' property='cc:attributionName' rel='cc:attributionURL'>cc_author</a> is licensed under a <a rel='license' href='cc_licenseUrl'>Creative Commons cc_license_string 3.0 Unported License</a>. Permissions beyond the scope of this license may be available at <a xmlns:cc='http://creativecommons.org/ns#' href='cc_permissions' rel='cc:morePermissions'>Permissions</a>.";
-  
   $license_strings = array('by' => 'Attribution',
 			   'by-nc' => 'Attribution NonCommercial',
 			   'by-nc-sa' => 'Attribution NonCommercial ShareAlike');
-  $defaults = array('cc_type'=>'by-nc-sa',
-		    'cc_title'=>$WikiTitle,
-		    'cc_work'=>$ScriptUrl,
-		    'cc_author'=>'Anonymous',
-		    'cc_permissions'=>"{$ScriptUrl}?n=Site.Permissions");
+  $defaults = array('type'=>'by-nc-sa',
+		    'title'=>$WikiTitle,
+		    'work'=>$ScriptUrl,
+		    'author'=>'Anonymous',
+		    'authorurl'=>'',
+		    'permissions'=>"{$ScriptUrl}?n=Site.Permissions");
+  $LicenseFmt = "<a rel='license' href='\$CCL_URL'><img alt='\$CCL_LogoAlt' style='border-width:0' src='\$CCL_LogoImg' /></a> <span xmlns:dct='http://purl.org/dc/terms/' href='http://purl.org/dc/dcmitype/Text' property='dct:title' rel='dct:type'><a href='\$CCL_Work'>\$CCL_Title</a></span> by <a xmlns:cc='http://creativecommons.org/ns#' href='\$CCL_AuthorUrl' property='cc:attributionName' rel='cc:attributionURL'>\$CCL_Author</a> is licensed under a <a rel='license' href='\$CCL_URL'>Creative Commons \$CCL_string 3.0 Unported License</a>. Permissions beyond the scope of this license may be available at <a xmlns:cc='http://creativecommons.org/ns#' href='\$CCL_Permissions' rel='cc:morePermissions'>Permissions</a>.";
+  
   $args = array_merge($defaults, ParseArgs($parameters));
   unset($args['#']);
-  $args['cc_license_string'] = (isset($license_strings[$args['cc_type']])?$license_strings[$args['cc_type']]:'Unknown');
+
+  $replacements = array();
+  $replacements['$CCL_Title'] = $args['title'];
+  $replacements['$CCL_Work'] = $args['work'];
+  // NOTE: more precise replacement must preced less precise replacement
+  $replacements['$CCL_AuthorUrl'] = $args['authorurl'];
+  $replacements['$CCL_Author'] = $args['author'];
+  $replacements['$CCL_Permissions'] = $args['permissions'];
+  $replacements['$CCL_string'] = (isset($license_strings[$args['type']])?$license_strings[$args['type']]:'Unknown');
   
-  $args['cc_licenseUrl'] = "http://creativecommons.org/licenses/{$args['cc_type']}/3.0/";
-  $args['cc_licenseLogoSrc'] = "http://i.creativecommons.org/l/{$args['cc_type']}/3.0/80x15.png";
-  $args['cc_licenseLogoAlt'] = "Creative Commons Licence";
-  @sms('args: ',$args,basename(__FILE__),__LINE__);
+  $replacements['$CCL_URL'] = "http://creativecommons.org/licenses/{$args['type']}/3.0/";
+  $replacements['$CCL_LogoImg'] = "http://i.creativecommons.org/l/{$args['type']}/3.0/80x15.png";
+  $replacements['$CCL_LogoAlt'] = "Creative Commons Licence";
+  @sms('args: ',$replacements,__FILE__,__LINE__,__FUNCTION__,__CLASS__);
 
-  $return_text = str_replace(array_keys($args),array_values($args),$LicenseFmt);
-  @sms('return text: ',$return_text,basename(__FILE__),__LINE__);
+  $return_text = str_replace(array_keys($replacements),array_values($replacements),$LicenseFmt);
+  @sms('return text: ',$return_text,__FILE__,__LINE__,__FUNCTION__,__CLASS__);
   return Keep($return_text);
-
 }
 
 Markup('dw-user','inline',
